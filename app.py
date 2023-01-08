@@ -26,12 +26,6 @@ def load_data():
 df = load_data()
 
 # Dictionaries
-pos_dict = {'E09000001': 29,  'E09000002': 32, 'E09000003': 12, 'E09000004': 40,  'E09000005': 19, 'E09000006': 46,
-           'E09000007': 20, 'E09000008': 45,  'E09000009': 18,  'E09000010': 5,  'E09000011': 39,  'E09000012': 22,
-           'E09000013': 26,  'E09000014': 13,  'E09000015': 11,  'E09000016': 24, 'E09000017': 17,  'E09000018': 25,
-           'E09000019': 21,  'E09000020': 27,  'E09000021': 43, 'E09000022': 36,  'E09000023': 38,  'E09000024': 44,
-           'E09000025': 31,  'E09000026': 23,  'E09000027': 34,  'E09000028': 37,  'E09000029': 52,  'E09000030': 30,
-           'E09000031': 14,  'E09000032': 35,  'E09000033': 28}
 display_dict = {'E09000007': 'CMD', 'E09000001': 'CTY', 'E09000012': 'HCK', 'E09000013': 'HMS', 'E09000014': 'HGY',
              'E09000019': 'ISL', 'E09000020': 'KNS', 'E09000022': 'LAM', 'E09000023': 'LSH', 'E09000025': 'NWM',
              'E09000028': 'SWR', 'E09000030': 'TOW', 'E09000032': 'WNS', 'E09000033': 'WST', 'E09000002': 'BAR',
@@ -81,28 +75,26 @@ st.write("")
 
 ## Plotting
 #filter data set based on input
-data = df[(df["ONS Code"].isin(pos_dict.keys())) & (df["Frequency"] == frequency) & 
+data = df[(df["ONS Code"].isin(display_dict.keys())) & (df["Frequency"] == frequency) & 
         (df["Purpose"]==purpose)].reset_index()
 data["Display name"] = data["ONS Code"].map(display_dict)
-data["pos"] = data["ONS Code"].map(pos_dict)
 
 # ========= Layout
 # Initialise Figure and define layout
 #8,7 | 10, 8.75
-fig,ax = plt.subplots(7,8,figsize=(12,9), sharey=True)
+layout = [
+        ["___","___","___","___","ENF","___","___","___"],
+        ["___","___","HRW","BRN","HGY","WTH","___","___"],
+        ["HDN","ELG","BRT","CMD","ISL","HCK","RDB","HVG"],
+        ["HNS","HMS","KNS","WST","CTY","TOW","NWM","BAR"],
+        ["___","RCH","WNS","LAM","SWR","LSH","GRN","BXL"],
+        ["___","___","KNG","MRT","CRD","BRM","___","___"],
+        ["___","___","___","STN","___","___","___","___"],
+        ]
+fig,axs = plt.subplot_mosaic(layout, figsize=(12,9), empty_sentinel="___") 
 
 fig.set_facecolor(clr_background)
 plt.subplots_adjust(wspace=0.1, hspace=0.1, left=0.05, right=0.95, bottom=0.05, top=0.9)
-
-#Format grid layout - remove frame + axis labels
-for a in ax:
-    for i in a:
-        i.get_xaxis().set_visible(False)
-        i.get_yaxis().set_visible(False)
-        i.set_ylim(ymax=60, ymin=0)   
-        i.axis('off')
-        for pos in ["top", "bottom", "right", "left"]:
-            i.spines[pos].set_visible(False)
 
 #=========== Plotting
 # plotting boroughs
@@ -111,51 +103,51 @@ x_values = [1,2,3,4,5,6]
 height = max(data[y_values].max()) + 30
 
 ## Loop through all boroughs and map their values
-for i in range(len(data)):
-    plt.subplot(7,8,data["pos"][i])
-    
+for ax in axs:
+    data_filtered = data[data["Display name"]==ax]
+        
     #display name of borough
-    plt.text(1.05, height-10, data["Display name"][i], fontsize=10, ha="left", va='top', color="#111111")
+    axs[ax].text(1.05, height-10, ax, fontsize=10, ha="left", va='top', color="#111111")
     
     #plot area chart
-    plt.fill_between(x_values,list(data.loc[i][y_values].values), zorder=1,color=clr_area, alpha=alpha_area,linewidth=0)    
-    plt.plot(x_values,list(data.loc[i][y_values].values), zorder=2, 
+    axs[ax].fill_between(x_values, list(data_filtered[y_values].values[0]), zorder=1, color=clr_area, alpha=0.7,
+                    linewidth=0)   
+    axs[ax].plot(x_values, list(data_filtered[y_values].values[0]), zorder=2, 
              color=clr_line,linewidth=2.5)    
     
     #plot last value dot
-    plt.scatter(max(x_values),list(data.loc[i][y_values].values)[-1], zorder=3,color=clr_line)
+    axs[ax].scatter(max(x_values), list(data_filtered[y_values].values[0])[-1], zorder=3,color=clr_line)
     
     #display most recent % value
-    plt.text(max(x_values)-0.05, height-7, '{:,.0f}%'.format(list(data.loc[i][y_values].values)[-1]), 
+    axs[ax].text(max(x_values)-0.05, height-7, '{:,.0f}%'.format(list(data_filtered[y_values].values[0])[-1]), 
              ha="right", fontsize=20, fontweight='bold', va='top', color=clr_value)
     
     #set background colour
-    plt.gca().set_xlim(xmin=0.8, xmax=6.2)
-    plt.gca().set_ylim(ymax=height, ymin=0) 
-    plt.gca().set_facecolor(clr_background)
-    for pos in ["top", "bottom", "right", "left"]:
-         plt.gca().spines[pos].set_visible(False)
+    axs[ax].set_xlim(xmin=0.8, xmax=6.2)
+    axs[ax].set_ylim(ymax=height, ymin=0) 
+    axs[ax].set_facecolor(clr_background)    
+    axs[ax].axis("off")
 
 #============= Legend           
 #add legend
-plt.subplot(11,11,120)
-plt.text(1.05,height-3,data["Display name"][0], fontsize=8, ha="left", va='top', color="#111111")
-plt.fill_between(x_values,list(data.loc[0][y_values].values), zorder=1,color="#999999", alpha=0.7,linewidth=0)    
-plt.plot(x_values,list(data.loc[0][y_values].values), zorder=2,color="#333333",linewidth=1.5)    
-plt.scatter(max(x_values),list(data.loc[0][y_values].values)[-1], zorder=3,color="#333333")
-plt.text(max(x_values)-0.05, height-2, '{:,.0f}%'.format(list(data.loc[0][y_values].values)[-1]), 
-         ha="right", fontsize=15, fontweight='bold', va='top', color="#333333")
-plt.gca().set_xlim(xmin=0.8, xmax=6.2)
-plt.gca().set_ylim(ymax=height, ymin=0) 
-plt.gca().set_facecolor("#E4E4E4")
+lgd = fig.add_axes([0.82, 0.05, 0.1, 0.1]) #axes to hold legend
+lgd.text(1.05,height-3,data["Display name"][0], fontsize=8, ha="left", va='top', color="#111111")
+lgd.fill_between(x_values,list(data.loc[0][y_values].values), zorder=1,color="#999999", alpha=0.7,linewidth=0)    
+lgd.plot(x_values,list(data.loc[0][y_values].values), zorder=2,color="#333333",linewidth=1.5)    
+lgd.scatter(max(x_values),list(data.loc[0][y_values].values)[-1], zorder=3,color="#333333")
+lgd.text(max(x_values)-0.05, height-2, '{:,.0f}%'.format(list(data.loc[0][y_values].values)[-1]), 
+        ha="right", fontsize=15, fontweight='bold', va='top', color="#333333")
+lgd.set_xlim(xmin=0.8, xmax=6.2)
+lgd.set_ylim(ymax=height, ymin=0) 
+lgd.set_facecolor("#E4E4E4")
 for pos in ["top", "bottom", "right", "left"]:
-    plt.gca().spines[pos].set_visible(False)
-plt.gca().set_xticks([1,6], ["2016", "2021"],fontsize = 10)
-plt.gca().set_yticks([])
-plt.gca().annotate('latest\nrate', xy=(max(x_values)+0.3, height-10), xycoords='data', xytext=(10, 0), textcoords='offset points', 
+    lgd.spines[pos].set_visible(False)
+lgd.set_xticks([1,6], ["2016", "2021"],fontsize = 10)
+lgd.set_yticks([])
+lgd.annotate('latest\nrate', xy=(max(x_values)+0.3, height-10), xycoords='data', xytext=(10, 0), textcoords='offset points', 
                    fontsize=11, ha='left', va='center', annotation_clip=False,
                     arrowprops=dict(arrowstyle="->",facecolor='black'))
-plt.gca().annotate('borough', xy=(min(x_values)+0.2, height-1), xycoords='data', xytext=(0, 16), textcoords='offset points', 
+lgd.annotate('borough', xy=(min(x_values)+0.2, height-1), xycoords='data', xytext=(0, 16), textcoords='offset points', 
                    fontsize=11, ha='center', va='center', annotation_clip=False,
                     arrowprops=dict(arrowstyle="->",facecolor='black'))
 
