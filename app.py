@@ -18,9 +18,9 @@ st.title('Cycling rates in London')
 
 # ========== DATA & SETUP
 # Load data
-@st.cache
+@st.cache_data
 def load_data():
-    df = pd.read_csv("https://raw.githubusercontent.com/Lisa-Ho/data-a-and-v/main/2210-london-cycling/cycling_rates_london_cleaned_2016-2021.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/Lisa-Ho/small-data-projects/main/2022/2210-london-cycling/cycling_rates_london_cleaned_2016-2021.csv")
     return df
     
 df = load_data()
